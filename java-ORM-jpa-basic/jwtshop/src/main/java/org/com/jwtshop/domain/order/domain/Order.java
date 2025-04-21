@@ -5,7 +5,9 @@ import lombok.Builder;
 import lombok.Getter;
 import org.com.jwtshop.domain.member.domain.Member;
 import org.com.jwtshop.domain.order.model.OrderStatus;
+import org.com.jwtshop.domain.product.domain.OrderItem;
 import org.com.jwtshop.global.domain.BaseEntity;
+import java.util.*;
 
 @Getter
 @Entity
@@ -20,31 +22,43 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "memberId")
     private Member member;
 
-    //주문 상태
-    @Column(columnDefinition = "VARCHAR(45) default '주문진행중'")
-    private String status = "주문 진행";
+
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
     //기본 생성자
     protected Order(){
 
     }
+
+    @OneToMany(mappedBy = "order")
+    List<OrderItem> orderItems = new ArrayList<>();
+
+    public void addOrderItem(int price, int count) {
+        this.orderItems.add(buildOrderItem(price, count));
+    }
+
     @Builder
     private Order(
             Long orderId,
-            Member member
-
+            Member member,
+            OrderStatus status
 
     ){
         this.orderId = orderId;
         this.member = member;
+        this.status = status;
     }
-    //주문 상태 변경
-    public void changeStatus(OrderStatus status){
-        this.status = status.getStatus();
+
+
+    private OrderItem buildOrderItem(int price, int count) {
+        return OrderItem
+                .builder()
+                .order(this)   // 양방향 연관관계 주입
+                .orderPrice(price)
+                .count(count)
+                .build();
     }
-    //취소하는 경우
-    public void cancle() {
-        this.status = OrderStatus.ORDER_CANCELED.getStatus();
-    }
+
 
 }

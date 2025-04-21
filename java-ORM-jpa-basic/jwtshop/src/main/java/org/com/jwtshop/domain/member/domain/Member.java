@@ -6,6 +6,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
+import org.com.jwtshop.domain.order.domain.Order;
+
+import java.util.*;
 
 @Getter
 @Entity
@@ -26,6 +29,9 @@ public class Member  {
 
     @Column(nullable = false)
     private String zipcode;
+
+    @OneToMany(mappedBy = "member")
+    private List<Order> orders = new ArrayList<>();
 
     protected Member() {
 
