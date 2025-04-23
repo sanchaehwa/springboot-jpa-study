@@ -25,7 +25,7 @@ public class Category {
 
     //하위 카테고리
     @OneToMany(mappedBy ="parent")
-    private List<Category>chidren = new ArrayList<>();
+    private List<Category> chidren = new ArrayList<>();
 
     @OneToMany(mappedBy = "category")
     private List<ItemCategory>itemCategories = new ArrayList<>();
