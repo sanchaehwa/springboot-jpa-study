@@ -13,20 +13,40 @@ public class JpaMain {
         EntityTransaction tx = em.getTransaction();
         tx.begin(); //트랜잭션 상태
         try {
+
+
+
             //데이터 삽입
             Team team = new Team();
             team.setName("TeamA");
             em.persist(team);
 
+            Locker locker = new Locker();
+            locker.setName("LockerA");
+            em.persist(locker);
+
+            Product product = new Product();
+            product.setName("ProductA");
+            em.persist(product);
+
             Member member = new Member();
             member.setUsername("Sam");
             member.changeTeam(team);
+          //  member.setLocker(locker);-> 단방향
+            member.assignLocker(locker);
+
+
+
+
+
+
+
             em.persist(member); //member 엔티티를 영속성 컨텍스트에 등록
 
-            team.addMember(member);
 
-            em.flush();
-            em.clear();
+
+//            em.flush();
+//            em.clear();
             /**
              -영속성 컨택스트가 아닌 DB에서 조회하게 만들려면 em 초기화
 

@@ -33,6 +33,10 @@ public class Member  {
     @OneToMany(mappedBy = "member")
     private List<Order> orders = new ArrayList<>();
 
+    public void addOrders(Order orders){
+        this.orders.add(orders);
+    }
+
     protected Member() {
 
     }

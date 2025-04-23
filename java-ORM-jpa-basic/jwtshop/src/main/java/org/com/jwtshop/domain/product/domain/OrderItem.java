@@ -13,19 +13,20 @@ public class OrderItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long order_item_id;
 
+    @Column(nullable = false)
+    private int orderPrice;
+
+    @Column(nullable = false)
+    private int count;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "orderId")
+    @JoinColumn(name = "order_id")
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id")
     private Item item;
 
-    @Column(nullable = false)
-    private int orderPrice;
-
-    @Column(nullable = false)
-    private int count;
 
     @Builder
     private OrderItem(
