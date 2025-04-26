@@ -2,6 +2,7 @@ package hellojpa;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class JpaMain {
@@ -14,34 +15,26 @@ public class JpaMain {
         tx.begin(); //트랜잭션 상태
         try {
 
+//            //데이터 삽입
+                Team team = new Team();
+                team.setName("TeamA");
+                em.persist(team);
 
+                Locker locker = new Locker();
+                locker.setName("LockerA");
+                em.persist(locker);
 
-            //데이터 삽입
-            Team team = new Team();
-            team.setName("TeamA");
-            em.persist(team);
+                Product product = new Product();
+                product.setName("ProductA");
+                em.persist(product);
 
-            Locker locker = new Locker();
-            locker.setName("LockerA");
-            em.persist(locker);
-
-            Product product = new Product();
-            product.setName("ProductA");
-            em.persist(product);
-
-            Member member = new Member();
-            member.setUsername("Sam");
-            member.changeTeam(team);
-          //  member.setLocker(locker);-> 단방향
-            member.assignLocker(locker);
-
-
-
-
-
-
-
-            em.persist(member); //member 엔티티를 영속성 컨텍스트에 등록
+                Member member = new Member();
+                member.setUsername("Sam");
+                member.changeTeam(team);
+                member.setCreatedDate(LocalDateTime.now());
+              //  member.setLocker(locker);-> 단방향
+                member.assignLocker(locker);
+                em.persist(member); //영속성 컨텍스트에 등록해줘야 tx.commit 할때 DB Insert
 
 
 
@@ -49,23 +42,31 @@ public class JpaMain {
 //            em.clear();
             /**
              -영속성 컨택스트가 아닌 DB에서 조회하게 만들려면 em 초기화
-
             데이터 조회 (객체 지향적이지 않는 방법)
             Member findMember = em.find(Member.class, member.getId());
             Long findTeamId = findMember.getTeamId();
             Team findTeam = em.find(Team.class, findTeamId);
             **/
            // Member findMember = em.find(Member.class, member.getId());//JPA는 DB에 조회 쿼리 안 날리고 1차캐시에서 바로 꺼내옴.
-            Team findTeam = em.find(Team.class, team.getId());
-            List<Member>members = findTeam.getMembers();
-            //Team findTeam = findMember.getTeam();
-            System.out.println(" ------");
-            for (Member m : members) {
-                System.out.println("m.getUsername() = " + m.getUsername());
-            }
-            System.out.println(" ------");
+//            Team findTeam = em.find(Team.class, team.getId());
+//            List<Member>members = findTeam.getMembers();
+//            //Team findTeam = findMember.getTeam();
+//            System.out.println(" ------");
+//            for (Member m : members) {
+//                System.out.println("m.getUsername() = " + m.getUsername());
+//            }
+//            System.out.println(" ------");
+
+            Movie movie = new Movie();
+            movie.setDirector("DirectorA");
+            movie.setActor("ActorA");
+            movie.setName("MovieA");
+            movie.setPrice("120000");
+
+            em.persist(movie);
 
             tx.commit();
+
 
         }
         catch (Exception e) {

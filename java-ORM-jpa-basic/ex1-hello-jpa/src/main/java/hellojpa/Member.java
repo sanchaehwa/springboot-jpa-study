@@ -1,20 +1,14 @@
 package hellojpa;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import lombok.*;
+import java.util.*;
 
 @Entity
 @Table(name="Member")
 @Getter
 @Setter
-public class Member {
+public class Member extends BaseEntity{
 
 
         @Id
@@ -40,6 +34,8 @@ public class Member {
 
         @OneToMany(mappedBy = "member")
         private List<MemberProduct> memberProducts = new ArrayList<>();
+
+
 
         public Member() {
         }
