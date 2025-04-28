@@ -25,11 +25,11 @@ public class Order extends BaseEntity {
     @JoinColumn(name = "memberId")
     private Member member; //한명의 사용자가 여러개의 주문
 
-    @OneToMany(mappedBy = "order")
+    @OneToMany(mappedBy = "order",cascade = CascadeType.ALL)
     List<OrderItem> orderItems = new ArrayList<>();
 
     //한 주문 - 하나의 배송정보
-    @OneToOne(cascade = CascadeType.ALL) //주문정보가 삭제가되면 연관된 Delivery 도 같이 삭제 - Casecade : 영속성 전이
+    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL) //주문정보가 삭제가되면 연관된 Delivery 도 같이 삭제 - Casecade : 영속성 전이
     @JoinColumn(name="delivery_id")
     private Delivery delivery;
 

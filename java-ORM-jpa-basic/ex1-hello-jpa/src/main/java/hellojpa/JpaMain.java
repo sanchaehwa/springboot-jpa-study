@@ -14,61 +14,87 @@ public class JpaMain {
         EntityTransaction tx = em.getTransaction();
         tx.begin(); //트랜잭션 상태
         try {
+            //팀객체 설정
+            Team team1 = new Team();
+            team1.setName("Team 1");
+            em.persist(team1);
 
-//            //데이터 삽입
-                Team team = new Team();
-                team.setName("TeamA");
-                em.persist(team);
+            Team team2 = new Team();
+            team2.setName("Team 2");
+            em.persist(team2);
 
-                Locker locker = new Locker();
-                locker.setName("LockerA");
-                em.persist(locker);
+            Member member1 = new Member();
+            member1.setUsername("joy");
+            member1.setTeam(team1);
+            em.persist(member1);
 
-                Product product = new Product();
-                product.setName("ProductA");
-                em.persist(product);
+            Member member2 = new Member();
+            member2.setUsername("jane");
+            member2.setTeam(team2);
+            em.persist(member2);
 
-                Member member = new Member();
-                member.setUsername("Sam");
-                member.changeTeam(team);
-                member.setCreatedDate(LocalDateTime.now());
-              //  member.setLocker(locker);-> 단방향
-                member.assignLocker(locker);
-                em.persist(member); //영속성 컨텍스트에 등록해줘야 tx.commit 할때 DB Insert
+            em.flush();
+            em.clear();
+
+            Member m1 = em.find(Member.class, member1.getId());
+            Member m2 = em.find(Member.class, member2.getId());
+            System.out.println("m2.getClass() == m1.getClass9 = " + (m2.getClass() == m1.getClass())); //true
+
+            logic(m1,m2);
+            
+            Member reference = em.getReference(Member.class, member1.getId());
+            System.out.println("reference.getClass() = " + reference.getClass());
+
+            System.out.println("a = a "+ (m1 == reference));
+
+
+            Member refMember = em.getReference(Member.class, member1.getId());
+            System.out.println("refMember.getClass() = " + refMember.getClass());
+
+            Member findMember = em.find(Member.class, member1.getId());
+            System.out.println("findMember.getClass() = " + findMember.getClass());
+            System.out.println("m.getTeam() = " + m1.getTeam().getClass());
+
+            System.out.println("a==a" +  ( refMember == findMember)); //true
+
+            List<Member>members = em.createQuery("select m from Member m",Member.class).getResultList();
+            //SQL : select * from Member  : 100명
+            //SQL : select * from Team where TEAM_ID **; => N+1 문제 발생
+
+            //영속성 전이 - child 객체도 parent 객체도 영속상태로 만들어소 함께 저장시킬때
+            Child child1 = new Child();
+            child1.setName("Child 1");
+
+            Child child2 = new Child();
+            child2.setName("Child 2");
+
+            Parent parent1 = new Parent();
+            parent1.setName("Parent 1");
+            parent1.addChild(child1);
+            parent1.addChild(child2);
+            em.persist(parent1);
 
 
 
-//            em.flush();
-//            em.clear();
-            /**
-             -영속성 컨택스트가 아닌 DB에서 조회하게 만들려면 em 초기화
-            데이터 조회 (객체 지향적이지 않는 방법)
-            Member findMember = em.find(Member.class, member.getId());
-            Long findTeamId = findMember.getTeamId();
-            Team findTeam = em.find(Team.class, findTeamId);
-            **/
-           // Member findMember = em.find(Member.class, member.getId());//JPA는 DB에 조회 쿼리 안 날리고 1차캐시에서 바로 꺼내옴.
-//            Team findTeam = em.find(Team.class, team.getId());
-//            List<Member>members = findTeam.getMembers();
-//            //Team findTeam = findMember.getTeam();
-//            System.out.println(" ------");
-//            for (Member m : members) {
-//                System.out.println("m.getUsername() = " + m.getUsername());
-//            }
-//            System.out.println(" ------");
+            Parent parent = em.find(Parent.class, parent1.getId());
+            Child childToRemove = parent.getChildList().get(0);  // 첫 번째 Child 객체를 가져와서 제거
 
-            Movie movie = new Movie();
-            movie.setDirector("DirectorA");
-            movie.setActor("ActorA");
-            movie.setName("MovieA");
-            movie.setPrice("120000");
+            parent.removeChild(childToRemove);
+            //제거한 변경사항을 DB에 반영
+            em.flush();
+            //영속성 컨텍스트 비움
+            em.clear();
 
-            em.persist(movie);
+            Parent parentAfter = em.find(Parent.class, parent1.getId()); //부모 객체에서 자식들을 조회하면, 삭제된 Child 는 포함되지 않음.
+            List<Child> remainingChildren = parentAfter.getChildList();
+
+            System.out.println("remainingChildren = " + remainingChildren); //child1 은 삭제 child2 는 남아있음.
+
 
             tx.commit();
-
-
         }
+
+
         catch (Exception e) {
             tx.rollback();
         }finally {
@@ -77,5 +103,16 @@ public class JpaMain {
         emf.close();
     }
 
+    private static void printMember(Member member) {
+        String username = member.getUsername();
+        System.out.println("username = " + username);
+        Team team = member.getTeam();
+        System.out.println("team = " + team.getName());
     }
+    private static void logic(Member m1, Member m2) {
+        System.out.println("m1 instanceof  Member = " + (m1 instanceof  Member)); //어떤 클래스를 상속받았는지 확인 - 실제 타입(Member 클래스 상속)
+        System.out.println("m2 instanceof  Member = " + (m2 instanceof  Member));
+    }
+
+}
 
