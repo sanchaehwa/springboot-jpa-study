@@ -1,9 +1,11 @@
 package org.com.jwtshop.domain.member.service;
 
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.com.jwtshop.domain.member.domain.Member;
 import org.com.jwtshop.domain.member.dto.MemberSignUpRequest;
+import org.com.jwtshop.domain.member.dto.MemberUpdateRequest;
 import org.com.jwtshop.domain.member.exception.DuplicateMemberException;
+import org.com.jwtshop.domain.member.exception.NotFoundUserException;
 import org.com.jwtshop.domain.member.repository.MemberRepository;
 import org.com.jwtshop.global.error.ErrorCode;
 import org.springframework.stereotype.Service;
@@ -20,9 +22,20 @@ public class MemberService {
         validateDuplicateMember(memberSignUpRequest);
         return memberRepository
                 .save(memberSignUpRequest.toEntity())
-                .getMember_id();
+                .getId();
 
     }
+    //회원정보수정
+    @Transactional
+    public Long updateMember(Long id, MemberUpdateRequest memberUpdateRequest) {
+        //수정 하는 회원 찾아
+        Member member = findActiveMember(id);
+        member.updateMember(memberUpdateRequest);
+
+        return member.getId();
+    }
+
+
 
     private void validateDuplicateMember(MemberSignUpRequest memberSignUpRequest) {
         //이름으로 중복을 테스트
@@ -31,6 +44,13 @@ public class MemberService {
         )) {
             throw new DuplicateMemberException(ErrorCode.CONFLICT_ERROR);
         }
+    }
+
+    @Transactional(readOnly = true) //현재 삭제되지않은 사용자만 조회용
+    public Member findActiveMember(Long id) {
+        return  memberRepository
+                .findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundUserException(ErrorCode.NOT_FOUND_RESOURCE));
     }
 
 }
