@@ -3,6 +3,7 @@ package hellojpa;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class JpaMain {
@@ -26,12 +27,48 @@ public class JpaMain {
             Member member1 = new Member();
             member1.setUsername("joy");
             member1.setTeam(team1);
+
+            //시간 객체 설정
+            Period period1 = new Period();
+            period1.setStartDate(LocalDateTime.now());
+            period1.setEndDate(LocalDateTime.now().plusDays(1));
+            member1.setPeriod(period1);
+
+            //주소 객체 설정
+//            Address address1 = new Address();
+//            address1.setStreet("Haeundae");
+//            address1.setCity("Busan");
+//            address1.setZipcode("23-1");
+           // member1.setAddress(new Address("Haeundae","Busan","23-1"));
+
+            Address address = new Address("Haeundae","Busan","23-1");
+            member1.setAddress(address);
+            member1.setPeriod(new Period(LocalDateTime.now(),LocalDateTime.now().plusDays(1)));
+
+            //List 와 Hash 는 값을 추가하는 개념 (컬렉션 타입)
+            member1.getFavoriteFoods().add("chicken");
+            member1.getFavoriteFoods().add("pasta");
+            member1.getFavoriteFoods().add("pizza");
+
+            member1.getAddressHistory().add(new AddressEntity("Haeundae", "Busan", "23-1"));
+            member1.getAddressHistory().add(new AddressEntity("Haeundae","Busan","23-1"));
+            member1.getAddressHistory().add(new AddressEntity("Gwangalli","Busan","24-1"));
+
+
             em.persist(member1);
 
             Member member2 = new Member();
-            member2.setUsername("jane");
+           // Address address2 = new Address("Gwangalli","Busan","24-1");
+            Address copyaddress = new Address(address.getStreet(), address.getCity(), address.getZipcode());
+            member2.setUsername("sunny");
             member2.setTeam(team2);
+            member2.setAddress(copyaddress);
+            member2.setPeriod(new Period(LocalDateTime.now(),LocalDateTime.now().plusDays(1)));
             em.persist(member2);
+
+            //같은 Address 사용후 값 변경 -같은 값타입을 사용하고 하나의 객체의 값타입을 변경하더라도 이 값타입을 사용하고있는 member2도바뀜 => 부작용
+            //복사해서 사용 (copyaddress)
+            member1.getAddress().setStreet("Seo-myeon");
 
             em.flush();
             em.clear();
@@ -90,7 +127,6 @@ public class JpaMain {
 
             System.out.println("remainingChildren = " + remainingChildren); //child1 은 삭제 child2 는 남아있음.
 
-
             tx.commit();
         }
 
@@ -113,6 +149,7 @@ public class JpaMain {
         System.out.println("m1 instanceof  Member = " + (m1 instanceof  Member)); //어떤 클래스를 상속받았는지 확인 - 실제 타입(Member 클래스 상속)
         System.out.println("m2 instanceof  Member = " + (m2 instanceof  Member));
     }
+
 
 }
 

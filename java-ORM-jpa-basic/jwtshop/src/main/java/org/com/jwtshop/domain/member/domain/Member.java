@@ -4,8 +4,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.com.jwtshop.domain.order.domain.Order;
 
 import java.util.*;
@@ -13,22 +16,24 @@ import java.util.*;
 @Getter
 @Entity
 @Table(name = "members")
+@NoArgsConstructor
 public class Member  {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) //member id 자동 증가
-    private Long memberId;
+    private Long member_id;
 
+    @NotBlank(message = "이름을 입력해주세요")
     @Column(nullable=false, unique=true, length=45)
     private String name;
 
-    @Column(nullable=false)
-    private String city;
+    @NotBlank(message = "주소를 입력해주세요")
+    @Embedded
+    private Address address;
 
-    @Column(nullable=false)
-    private String street;
-
-    @Column(nullable = false)
-    private String zipcode;
+    @NotBlank(message = "전화번호를 입력해주세요")
+    @Column(nullable=false, unique=true, length=45 )
+    @Pattern(regexp = "(01[016789])(\\d{3,4})(\\d{4})", message = "전화번호를 올바르게 작성해주세요") //정규식 검사
+    private String phone;
 
     @OneToMany(mappedBy = "member")
     private List<Order> orders = new ArrayList<>();
@@ -37,17 +42,17 @@ public class Member  {
         this.orders.add(orders);
     }
 
-    protected Member() {
+
+    @Builder
+    private Member(Long member_id, String name, Address address, String phone) {
+        this.member_id = member_id;
+        this.name = name;
+        this.address = address;
+        this.phone = phone;
 
     }
-    @Builder
-    private Member(Long memberId, String name, String city, String street, String zipcode) {
-        this.memberId = memberId;
-        this.name = name;
-        this.city = city;
-        this.street = street;
-        this.zipcode = zipcode;
-    }
+
+
 
 
 

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import org.com.jwtshop.domain.order.model.DeliveryStatus;
+import org.com.jwtshop.domain.member.domain.Address;
 import org.com.jwtshop.global.domain.BaseEntity;
 
 @Entity
@@ -23,13 +24,16 @@ public class Delivery extends BaseEntity {
     @Column(nullable = false)
     private DeliveryStatus status;
 
+    @Embedded
+    private Address address;
     //기본생성자
     protected Delivery() {}
 
     @Builder
-    public Delivery(Order order, DeliveryStatus status) {
+    public Delivery(Order order, DeliveryStatus status, Address address) {
         this.order = order;
         this.status = status;
+        this.address = address;
     }
 
     public void addOrder(Order order) {
