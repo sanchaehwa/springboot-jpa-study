@@ -11,6 +11,8 @@ import java.util.*;
 @Getter
 @Setter
 @Table(name="members")
+//NamedQuery : 애플리케이션 로딩 시점에 쿼리 검증
+@NamedQuery(name = "Member.findByUsername",query="select m from Member m where m.username = :username" )
 
 public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,7 +40,8 @@ public class Member {
         return "Member{" +
                 "id=" + id +
                 ", username='" + username + '\'' +
-                ", age =" + age +
+                ", age=" + age +
+                ", team=" + (team != null ? team.getTeamname() : "null") +
                 '}';
     }
 

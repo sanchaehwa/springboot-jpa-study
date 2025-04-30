@@ -15,7 +15,7 @@
             <property name="javax.persistence.jdbc.user" value="root"/>
             <property name="javax.persistence.jdbc.password" value="12345"/>
             <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/hellojpa"/>
-            <property name="hibernate.dialect" value="com.example.MySQLDialectWithFunction"/>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
 
             <!-- 옵션 -->
             <property name="hibernate.show_sql" value="true"/>

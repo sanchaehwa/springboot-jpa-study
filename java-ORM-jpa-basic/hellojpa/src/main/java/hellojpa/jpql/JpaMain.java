@@ -11,11 +11,12 @@ public class JpaMain {
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
         EntityManager em = emf.createEntityManager();
         EntityTransaction tx = em.getTransaction();
-        tx.begin();
         //code
         try {
+            tx.begin();
+
             Team team = new Team();
-            team.setTeamname("Team 1");
+            team.setTeamname("Team1");
             em.persist(team);
 
             Member member = new Member();
@@ -23,7 +24,44 @@ public class JpaMain {
             member.setAge(5);
             member.setType(MemberType.ADMIN);
             member.setTeam(team);
+            team.addMember(member);
+
             em.persist(member);
+
+
+
+            Team team2 = new Team();
+            team2.setTeamname("Team2");
+            em.persist(team2);
+
+            Member member2 = new Member();
+            member2.setUsername("joy");
+            member2.setAge(10);
+            member2.setType(MemberType.USER);
+            member2.setTeam(team2);
+            team2.addMember(member2);
+
+            em.persist(member2);
+
+            Team team3 = new Team();
+            team3.setTeamname("Team1");
+            em.persist(team3);
+
+            Member member3 = new Member();
+            member3.setUsername("bum");
+            member3.setAge(20);
+            member3.setType(MemberType.ADMIN);
+            member3.setTeam(team3);
+            team3.addMember(member3);
+
+            em.persist(member3);
+
+            tx.commit();
+
+
+
+
+
 
 
             /** TypedQuery , Query **/
@@ -51,7 +89,7 @@ public class JpaMain {
             List<Team> resultList2 = em.createQuery("SELECT t FROM Member m join m.team t  ", Team.class).getResultList(); //명시적 조인이 좋음
 
             //Embedded Projection
-            List<Address> resultList3 = em.createQuery("select o.address from Order o", Address.class).getResultList();
+//            List<Address> resultList3 = em.createQuery("select o.address from Order o", Address.class).getResultList();
 
             //Scalar Projection - 여러개의 필드를 Scalar로 조회하면 한줄의 결과 Object[]
             List<MemberDTO> resultList4 = em.createQuery(
@@ -81,8 +119,6 @@ public class JpaMain {
 //                em.persist(member);
 //
 //            }
-            em.flush();
-            em.clear();
 
 
            /** Join / 조건식 CASE 문 **/
@@ -97,7 +133,7 @@ public class JpaMain {
                     .getResultList();
             System.out.println("resulList.size = " + resultList5.size());
             for (Member member1 : resultList5) {
-                System.out.println("username = " + member);
+                System.out.println("username = " + member1);
             }
 
             String query7 = "SELECT m.username, 'HELLO', true " +
@@ -137,36 +173,74 @@ public class JpaMain {
 
             //Orcal 데이터 베이스에서 사용되는 특수한 더미 테이블. 테이블 없이 Select 하려면 DUAL 사용 - JPQL은 DUAL 개념이 없어서, 항상 엔티티 기준
             //Hibernate의 경우 Concat(문자열 덧셈을 수행하는 기본함수) 과 동일 연산자 || 제공  SELECT 'a' || 'b' FROM Player p;
-            String query9 = "SELECT CONCAT('a','b') FROM Member m";
-            List<String> resultList10 = em.createQuery(query9, String.class).getResultList();
-            for (String s : resultList10) {
-                System.out.println(s);
-            }
-            //SUBSTRING : 문자열 일부를 잘라냄 (2 - 4까지 잘라낸다는것 (2,3)
-            String query10 = "SELECT SUBSTRING('Hello' , 2, 3) FROM Member m";
-            List<String> resultList11 = em.createQuery(query10, String.class).getResultList();
-            for (String s : resultList11) {
-                System.out.println(s);
-            }
-            //Lower, Upper 소문자 - 대문자
-            String query11 ="SELECT LOWER('Java') , UPPER('PYthon') FROM Member m";
-            List<String> resultList12 = em.createQuery(query11, String.class).getResultList();
-            for (String s : resultList12) {
-                System.out.println(s);
-            }
-            //Locate: 부분 문자열의 시작 위치 반환 (없으면 0)
-            String query12 = "SELECT LOCATE('el', 'hello') FROM Member m";//2
-            List<String> resultList13 = em.createQuery(query12, String.class).getResultList();
-            for (String s : resultList13) {
-                System.out.println(s);
-            }
+//            String query9 = "SELECT CONCAT('a','b') FROM Member m";
+//            List<String> resultList10 = em.createQuery(query9, String.class).getResultList();
+//            for (String s : resultList10) {
+//                System.out.println(s);
+//            }
+//            //SUBSTRING : 문자열 일부를 잘라냄 (2 - 4까지 잘라낸다는것 (2,3)
+//            String query10 = "SELECT SUBSTRING('Hello' , 2, 3) FROM Member m";
+//            List<String> resultList11 = em.createQuery(query10, String.class).getResultList();
+//            for (String s : resultList11) {
+//                System.out.println(s);
+//            }
+//            //Lower, Upper 소문자 - 대문자
+//            String query11 ="SELECT LOWER('Java') , UPPER('PYthon') FROM Member m";
+//            List<String> resultList12 = em.createQuery(query11, String.class).getResultList();
+//            for (String s : resultList12) {
+//                System.out.println(s);
+//            }
+//            //Locate: 부분 문자열의 시작 위치 반환 (없으면 0)
+//            String query12 = "SELECT LOCATE('el', 'hello') FROM Member m";//2
+//            List<String> resultList13 = em.createQuery(query12, String.class).getResultList();
+//            for (String s : resultList13) {
+//                System.out.println(s);
+//            }
             /** 경로 함수 **/
-            //
+            String query13 = "SELECT m.team.teamname FROM Member m";
+            List<String> resultList14 = em.createQuery(query13, String.class).getResultList();
+            //여기서 만약 null - m.team.name 은 묵시적 INNER JOIN을 발생시키므로 team이 null이다 Member도 출력안함
+            //NUll 도 포함하고 싶다면 LEFT 로 Team 조건이 들어가게, Team 조건과 상관없이 항상 Member 출력하게
 
+            System.out.println(" ===============");
 
-            tx.commit();
+            String query14 = "SELECT t.teamname FROM Member m LEFT JOIN m.team t";
+            List<String> resultList15 = em.createQuery(query14, String.class).getResultList();
+            for (String s : resultList15) {
+                System.out.println(s);
+            }
 
-        }catch (Exception e) {
+            /**Fetch Join**/
+            //회원을 조회하면서 연관된 팀도 함께 조회하고 싶을때
+            String query15 = "SELECT m from Member m join fetch m.team"; //join fetch N+1 문제 해결
+            List<Member> resultList16 = em.createQuery(query15, Member.class).getResultList();
+            for (Member m : resultList16) {
+                System.out.println(m);
+            }
+            //팀 조회
+            String query16 = "SELECT t from Team t join fetch t.members";
+            List<Team> teams = em.createQuery(query16, Team.class).getResultList();
+            for (Team t : teams) { //1:n 관계라서 팀 하나 꺼내고
+                System.out.println("Team: " + t.getTeamname() + "[members=" + t.getMembers() + "]");
+                for (Member m : t.getMembers()) { //그 팀에 속한 Member 꺼내고
+                    System.out.println("  Member: " + m);
+                }
+            }
+            String jpql = "select m from Member m where m = :member";
+            List resultList17 = em.createQuery(jpql).setParameter("member",member)//member 엔티티 파라미터로 전달
+                    .getResultList();
+            System.out.println("resultList17 = " + resultList17);
+
+            List<Member> resultList18 =
+                    em.createNamedQuery("Member.findByUsername", Member.class)
+                            .setParameter("username",
+                                    "sam")
+                            .getResultList();
+            for (Member m : resultList18) {
+                System.out.println(m);
+            }
+
+        } catch (Exception e) {
             tx.rollback();
             e.printStackTrace();
         }finally {

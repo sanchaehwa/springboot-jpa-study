@@ -19,8 +19,15 @@ public class Team {
     @Column(nullable = false)
     private String teamname;
 
-    @OneToMany(mappedBy = "team")
+    @OneToMany(mappedBy = "team",fetch = FetchType.LAZY)
     private List<Member> members = new ArrayList<>();
+
+    public void addMember(Member member) {
+        members.add(member);
+        member.setTeam(this);
+    }
+
+
 
 
 
