@@ -1,6 +1,9 @@
 package hellojpa;
 
 import jakarta.persistence.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -25,7 +28,7 @@ public class JpaMain {
             em.persist(team2);
 
             Member member1 = new Member();
-            member1.setUsername("joy");
+            member1.setUsername("max");
             member1.setTeam(team1);
 
             //시간 객체 설정
@@ -94,7 +97,7 @@ public class JpaMain {
 
             System.out.println("a==a" +  ( refMember == findMember)); //true
 
-            List<Member>members = em.createQuery("select m from Member m",Member.class).getResultList();
+            List<Member>findmember = em.createQuery("select m from Member m",Member.class).getResultList();
             //SQL : select * from Member  : 100명
             //SQL : select * from Team where TEAM_ID **; => N+1 문제 발생
 
@@ -126,6 +129,37 @@ public class JpaMain {
             List<Child> remainingChildren = parentAfter.getChildList();
 
             System.out.println("remainingChildren = " + remainingChildren); //child1 은 삭제 child2 는 남아있음.
+
+            //조건을 붙어서 null이 아닌경우에만 조회하도록
+            List<Member> members = em.createQuery("SELECT m FROM Member m", Member.class).getResultList();
+            if (!members.isEmpty()) {
+                List<Member> resultList = em.createQuery(
+                        "SELECT m FROM Member m WHERE m.username LIKE '%joy%'", Member.class
+                ).getResultList();
+
+                for (Member member : resultList) {
+                    System.out.println("member = " + member);
+                }
+            }
+
+
+            //Criteria 사용준비
+            CriteriaBuilder cb = em.getCriteriaBuilder();
+            CriteriaQuery<Member> query= cb.createQuery(Member.class);
+            //조회 클래스
+            Root<Member> m = query.from(Member.class);
+            //쿼리생성
+            CriteriaQuery<Member> cq = query.select(m).where(cb.equal(m.get("username"), "joy"));
+            List<Member> resultList = em.createQuery(cq).getResultList();
+
+
+            //Native SQL
+            String sql = "SELECT ID, AGE, TEAM_ID, NAME FROM MEMBER WHERE NAME ='kim'";
+
+            List<Member> nativesql_resultlist = em.createNativeQuery(sql, Member.class).getResultList();
+            System.out.println("nativesql_resultlist = " + nativesql_resultlist);
+
+
 
             tx.commit();
         }
