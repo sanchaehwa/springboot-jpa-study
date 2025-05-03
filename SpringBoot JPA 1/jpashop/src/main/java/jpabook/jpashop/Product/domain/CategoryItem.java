@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name="category_item")
 public class CategoryItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

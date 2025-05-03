@@ -15,7 +15,7 @@ import java.util.List;
 @DiscriminatorColumn(name = "dtype")
 @SuperBuilder //상속관계에서는 상속받은 필드도 Builder에서 사용
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-
+@Table(name ="item")
 public  abstract class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
