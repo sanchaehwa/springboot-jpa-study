@@ -38,6 +38,5 @@ public class Member {
         this.username = username;
         this.address = address;
 
-
     }
 }

@@ -1,7 +1,6 @@
 package jpabook.jpashop.Member.repository;
 
 import jpabook.jpashop.Member.domain.Member;
-import jpabook.jpashop.Member.dto.MemberSignUpRequest;
 import jpabook.jpashop.Member.dto.MemberSignUpTestRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
