@@ -3,6 +3,7 @@ package jpabook.jpashop.Product.domain;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jpabook.jpashop.Product.exception.NotEnoughStockException;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -39,6 +40,18 @@ public  abstract class Item {
     @OneToMany(mappedBy = "item")
     private List<CategoryItem> categoryItems = new ArrayList<>();
 
+    //재고수량 증가 로직
+    public void addStock(int quantity) {
+        this.stockQuantity += quantity;
+    }
+    //재고수량 감소 로직
+    public void removeStock(int quantity) {
+        int reststock = this.stockQuantity - quantity;
+        if (reststock < 0) {
+            throw new NotEnoughStockException("need more stock");
+        }
+        this.stockQuantity = reststock;
+    }
 
 
 
