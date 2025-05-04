@@ -44,7 +44,7 @@ public class MemberService {
         return memberRepository.findAll();
     }
     //회원 조회(개별)
-    public Member findOne(Long id) {
-        return memberRepository.find(id);
+    public Member findOne(Long memberId) {
+        return memberRepository.find(memberId);
     }
 }

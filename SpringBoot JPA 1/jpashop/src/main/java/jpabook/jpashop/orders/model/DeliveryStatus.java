@@ -1,4 +1,4 @@
-package jpabook.jpashop.Order.model;
+package jpabook.jpashop.orders.model;
 
 import lombok.Getter;
 

@@ -27,7 +27,7 @@ public class ItemService {
     }
     //item 하나 조회
     public Item find_item(Long id){
-        return itemRepository.findOne_item(id);
+        return itemRepository.findOne_Item(id);
     }
 
 }

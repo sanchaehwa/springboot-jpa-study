@@ -1,4 +1,4 @@
-package jpabook.jpashop.Order.domain;
+package jpabook.jpashop.orders.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -7,7 +7,6 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.aspectj.weaver.ast.Or;
 
 @Entity
 @Getter
@@ -44,16 +43,16 @@ public class OrderItem {
         this.count = count;
     }
     //생성 매서드
-    public static OrderItem createOrderItem(Order order, Item item, int orderPrice, int count) {
+    public static OrderItem createOrderItem(Item item, int orderPrice, int count) {
         OrderItem orderItem = OrderItem.builder()
-                .order(order)
                 .item(item)
                 .orderPrice(orderPrice)
                 .count(count)
                 .build();
-        //재고 차감 비즈니스 로직
+        // 재고 차감
         item.removeStock(count);
         return orderItem;
+
     }
 
     //편의 매서드

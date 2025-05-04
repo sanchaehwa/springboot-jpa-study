@@ -23,7 +23,7 @@ public class ItemRepository {
         }
      }
      //item 하나 조회
-    public Item findOne_item(Long id) {
+    public Item findOne_Item(Long id) {
         return em.find(Item.class, id);
     }
     //item 전체 조회

@@ -42,7 +42,7 @@ public class MemberServiceTest {
     public void validateMemberSignUpTestRequest() throws Exception{
         //then
         //member1
-         String username1 = "test1";
+        String username1 = "test1";
 
          Member member1 = Member.builder()
                  .username(username1)
@@ -52,6 +52,7 @@ public class MemberServiceTest {
 
          Member member2 = Member.builder()
                  .username(username2)
+
                  .build();
          //when
          memberService.join(member1);

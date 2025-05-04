@@ -2,7 +2,7 @@ package jpabook.jpashop.Member.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jpabook.jpashop.Order.domain.Order;
+import jpabook.jpashop.orders.domain.Order;
 import lombok.*;
 
 import java.util.ArrayList;

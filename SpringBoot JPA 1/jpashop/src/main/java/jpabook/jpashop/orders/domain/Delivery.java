@@ -1,8 +1,8 @@
-package jpabook.jpashop.Order.domain;
+package jpabook.jpashop.orders.domain;
 
 import jakarta.persistence.*;
 import jpabook.jpashop.Member.domain.Address;
-import jpabook.jpashop.Order.model.DeliveryStatus;
+import jpabook.jpashop.orders.model.DeliveryStatus;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
