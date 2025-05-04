@@ -23,11 +23,11 @@ public class ItemRepository {
         }
      }
      //item 하나 조회
-    public Item findOne_Item(Long id) {
+    public Item findOne(Long id) {
         return em.find(Item.class, id);
     }
     //item 전체 조회
-    public List<Item> findAll_item() {
+    public List<Item> findAll() {
         return em.createQuery("select i from Item i", Item.class).getResultList();
     }
 

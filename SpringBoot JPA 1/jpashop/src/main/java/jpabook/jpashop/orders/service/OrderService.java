@@ -5,6 +5,7 @@ import jpabook.jpashop.Member.repository.MemberRepository;
 import jpabook.jpashop.orders.domain.Delivery;
 import jpabook.jpashop.orders.domain.Order;
 import jpabook.jpashop.orders.domain.OrderItem;
+import jpabook.jpashop.orders.dto.OrderSearch;
 import jpabook.jpashop.orders.model.DeliveryStatus;
 import jpabook.jpashop.orders.model.OrderStatus;
 import jpabook.jpashop.orders.repository.OrderRepository;
@@ -13,6 +14,8 @@ import jpabook.jpashop.Product.repository.ItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 
 @Service
@@ -30,7 +33,7 @@ public class OrderService {
         //회원 조회
         Member member = memberRepository.find(memberId);
         //상품 조회
-        Item item = itemRepository.findOne_Item(itemId);
+        Item item = itemRepository.findOne(itemId);
         //배송정보 생성
         Delivery delivery = Delivery.builder()
                 .address(member.getAddress())
@@ -56,8 +59,8 @@ public class OrderService {
 
     }
 //    //검색
-//    public List<Order> findOrders(OrderSearch  orderSearch) {
-//        return orderRepository.findAll_Order(orderSearch);
-//    }
+    public List<Order> findOrders(OrderSearch orderSearch) {
+        return orderRepository.findAllByString(orderSearch);
+    }
 
 }

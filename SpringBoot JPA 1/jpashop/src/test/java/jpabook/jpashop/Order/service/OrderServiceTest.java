@@ -19,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -96,6 +95,7 @@ public class OrderServiceTest {
         assertEquals(OrderStatus.ORDER_CANCELED,getOrder.getStatus(), "주문 취소시 상태는 CANCEL 이다.");
         assertEquals(10, item.getStockQuantity(), "주문이 취소된 상품은 그만큼 재고가 증가해 야 한다.");
       }
+      @DisplayName("주문 수량이 재고수량을 초과한 경우")
       @Test
       public void order_Quantity_Exceeds_Stock_Should_Throw_Exception() throws Exception{
           //given
