@@ -35,6 +35,7 @@ public class OrderItem {
     @Min(1) //주문은 1개이상은 해야함.
     private int count;
 
+    //생성자
     @Builder
     public OrderItem(Order order, Item item, int orderPrice, int count) {
         this.order = order;
@@ -42,13 +43,31 @@ public class OrderItem {
         this.orderPrice = orderPrice;
         this.count = count;
     }
+    //생성 매서드
+    public static OrderItem createOrderItem(Order order, Item item, int orderPrice, int count) {
+        OrderItem orderItem = OrderItem.builder()
+                .order(order)
+                .item(item)
+                .orderPrice(orderPrice)
+                .count(count)
+                .build();
+        //재고 차감 비즈니스 로직
+        item.removeStock(count);
+        return orderItem;
+    }
 
     //편의 매서드
     public void addOrder(Order order) {
         this.order = order;
     }
 
+    //주문취소시 원복
+    public void cancel() {
+        getItem().addStock(count);
 
-
-
+    }
+    //총합 조회로직
+    public int getTotalPrice() {
+        return orderPrice * count;
+    }
 }

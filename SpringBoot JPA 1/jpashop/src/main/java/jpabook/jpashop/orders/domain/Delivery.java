@@ -36,7 +36,7 @@ public class Delivery {
         this.address = address;
     }
 
-    public void addOrder(Order order){
+    public void setOrder(Order order){
         this.order = order;
     }
 }
