@@ -177,3 +177,79 @@ public void update(Long id, String name) {
 }
 	
 ```
+## API 개발 고급
+
+### @PostConstruct
+
+```java
+package jpabook.jpashop;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import jpabook.jpashop.domain.Address;
+import jpabook.jpashop.domain.Member;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+/*
+조회용 샘플 데이터 입력
+- userA
+    - JPA1 Book
+    - JPA2 Book
+- userB
+    - SPRING1 BOOK
+    - SPRING2 BOOK
+ */
+@Component
+@RequiredArgsConstructor
+public class InitDb {
+
+    private final InitService initService;
+    @PostConstruct
+    public void init() {
+
+    }
+
+    @Component
+    @Transactional
+    @RequiredArgsConstructor
+    static class InitService{
+        private final EntityManager em;
+        public void dbInit1(){ //DB에 샘플데이터 저장하려는 매서드
+            Member member = new Member();
+            member.setName("UserA");
+            member.setAddress(new Address("부산", "해운대", "23-1"));
+            em.persist(member);
+        }
+    }
+
+}
+
+```
+
+1. **스프링 컨테이너가 InitDb를 빈으로 등록한다**
+    
+    → @Component 덕분에 InitDb가 스프링 Bean으로 등록됨
+    
+2. **InitDb의 생성자가 호출되면서 InitService가 주입된다**
+    
+    → @RequiredArgsConstructor 덕분에 final InitService initService 생성자 주입
+    
+    → 이 시점에 InitService 의존성 주입이 완료됨
+    
+3. **@PostConstruct 메서드(init)가 실행된다**
+    
+    → 의존성 주입이 끝난 뒤, 스프링이 자동으로 init() 메서드 호출
+    
+    → initService.dbInit1() 메서드를 호출함
+    
+4. **initService.dbInit1() 메서드가 실행되는데, 이때 트랜잭션이 적용된다**
+    
+    → InitService 클래스에 @Transactional이 붙어 있어서 프록시(Proxy)가 트랜잭션을 관리
+    
+    → 메서드 실행 전에 **트랜잭션 시작 → 메서드 끝나면 commit/rollback 처리**
+    
+5. **em.persist()가 트랜잭션 안에서 실행된다 (영속성 컨텍스트에 Member 등록)**
+    
+    → 트랜잭션 커밋 시점에 JPA가 flush → DB에 insert 쿼리 실행
