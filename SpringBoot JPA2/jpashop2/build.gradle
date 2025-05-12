@@ -40,6 +40,9 @@ dependencies {
 
 	//쿼리 파라미터 로그
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0'
+
+	//hibernate 
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5-jakarta'
 }
 
 tasks.named('test') {
