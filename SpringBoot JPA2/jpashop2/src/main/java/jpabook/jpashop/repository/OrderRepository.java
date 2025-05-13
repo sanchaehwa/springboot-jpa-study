@@ -69,10 +69,19 @@ public class OrderRepository {
         return null;
     }
 
-    public List<Order> findAllWithMemberDelivery() {
-        return em.createQuery("select o from Order o " + "join fetch o.member m " + "join fetch o.delivery d ", Order.class).getResultList(); //Order - Member - Delivery Join 하고 한번에 가져오는(Lazy 무시 - Proxy 값을 채워서 가져오는것이 아니라, 진짜 객체를 가져옴)
+    public List<Order> findAllWithMemberDelivery(int offset, int limit) {
+        return em.createQuery("select o from Order o " + "join fetch o.member m " + "join fetch o.delivery d ", Order.class)
+                .setFirstResult(offset)
+                .setMaxResults(limit)
+                .getResultList(); //Order - Member - Delivery Join 하고 한번에 가져오는(Lazy 무시 - Proxy 값을 채워서 가져오는것이 아니라, 진짜 객체를 가져옴)
 
     }
+    public List<Order> findAllWithItem() {
+        return em.createQuery("  select distinct o from Order o " + " join fetch o.member m" + " join fetch o.delivery d "+ "join fetch o.orderItems oi "+" join fetch oi.item i " ,Order.class)
+                .getResultList();
 
+
+    }
+    //distinct : 데이터 중복 제거
  }
 

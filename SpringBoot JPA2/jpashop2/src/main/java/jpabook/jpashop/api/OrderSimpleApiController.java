@@ -40,14 +40,14 @@ public class OrderSimpleApiController {
                 .map(SimpleOrderDto::new) //o -> new SimpleOrderDto
                 .collect(Collectors.toList());
     }
-    @GetMapping("/api/v3/simple-orders") //성능 최적화 , 패치 조인
-    public List<SimpleOrderDto> ordersV3() {
-        List<Order> orders = orderRepository.findAllWithMemberDelivery();
-        return orders.stream()
-                .map(SimpleOrderDto::new)
-                .collect(Collectors.toList());
-
-    }
+//    @GetMapping("/api/v3/simple-orders") //성능 최적화 , 패치 조인
+//    public List<SimpleOrderDto> ordersV3() {
+//        List<Order> orders = orderRepository.findAllWithMemberDelivery();
+//        return orders.stream()
+//                .map(SimpleOrderDto::new)
+//                .collect(Collectors.toList());
+//
+//    }
     @GetMapping("/api/v4/simple-orders") //JPA에서 DTO로 바로 가져오는것.
     public List<OrderSimpleQueryDto> ordersV4() {
        return orderSimpleQueryRepository.findOrderDtos();
