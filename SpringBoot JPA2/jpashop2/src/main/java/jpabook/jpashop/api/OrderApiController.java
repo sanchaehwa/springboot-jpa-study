@@ -2,6 +2,8 @@ package jpabook.jpashop.api;
 
 import jpabook.jpashop.domain.*;
 import jpabook.jpashop.repository.OrderRepository;
+import jpabook.jpashop.repository.order.query.OrderQueryDto;
+import jpabook.jpashop.repository.order.query.OrderQueryRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,7 +20,9 @@ import static java.util.stream.Collectors.toList;
 @RequiredArgsConstructor
 
 public class OrderApiController {
+
     private final OrderRepository orderRepository;
+    private final OrderQueryRepository orderQueryRepository;
 
     //Order 엔티티를 직접노출하게 되면 엔티티가 변하면 API 스펙도 같이 변함.
     @GetMapping("/api/v1/orders")
@@ -62,7 +65,6 @@ public class OrderApiController {
                 .collect(toList());
         return result;
     }
-
     //
     //Fetch Join으로 성능 최적화
     @GetMapping("api/v3.1/orders")
@@ -76,6 +78,14 @@ public class OrderApiController {
                 .collect(toList());
         return result;
     }
+    @GetMapping("/api/v4/orders")
+        public List<OrderQueryDto> ordersV4() {
+            return orderQueryRepository.findOrderQueryDtos();
+
+    }
+
+
+
 
     @Data
     static class OrderDto {
@@ -114,4 +124,5 @@ public class OrderApiController {
             count = orderItem.getCount();
         }
     }
+
 }
