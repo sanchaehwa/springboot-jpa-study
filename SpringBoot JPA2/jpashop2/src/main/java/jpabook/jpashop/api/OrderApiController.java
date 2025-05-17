@@ -6,6 +6,7 @@ import jpabook.jpashop.repository.order.query.OrderFlatDto;
 import jpabook.jpashop.repository.order.query.OrderItemQueryDto;
 import jpabook.jpashop.repository.order.query.OrderQueryDto;
 import jpabook.jpashop.repository.order.query.OrderQueryRepository;
+import jpabook.jpashop.service.query.OrderQueryService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +26,7 @@ public class OrderApiController {
 
     private final OrderRepository orderRepository;
     private final OrderQueryRepository orderQueryRepository;
+    private final OrderQueryService orderQueryService;
 
     //Order 엔티티를 직접노출하게 되면 엔티티가 변하면 API 스펙도 같이 변함.
     @GetMapping("/api/v1/orders")
@@ -56,16 +58,14 @@ public class OrderApiController {
 
     //Fetch Join으로 성능 최적화
     @GetMapping("api/v3/orders")
-    public List<OrderDto> orderV3() {
-        List<Order> orders = orderRepository.findAllWithItem();
-       for (Order order : orders) {
-           System.out.println("order  = " + order + "id = " + order.getId());
-       }
-
-        List<OrderDto> result = orders.stream()
-                .map(o -> new OrderDto(o))
-                .collect(toList());
-        return result;
+    public List<jpabook.jpashop.service.query.OrderDto> orderV3() {
+//        List<Order> orders = orderRepository.findAllWithItem();
+//
+//        List<OrderDto> result = orders.stream()
+//                .map(o -> new OrderDto(o))
+//                .collect(toList());
+//        return result;
+        return orderQueryService.orderV3();
     }
     //
     //Fetch Join으로 성능 최적화
