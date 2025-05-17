@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -43,5 +45,39 @@ public class OrderQueryRepository {
                 .setParameter("orderId", orderId)
                 .getResultList();
         //to many 관계는 부모 하나에 여러 자식이 붙을수있으니깐 하나에 대한 여러 Row 반환 => 컬랙션 패치 조인을 써야함.
+    }
+    //컬렉션 패치 조인
+    public List<OrderQueryDto> findAllByDto_optimization() {
+
+        List<OrderQueryDto> result = findOrders();
+
+        Map<Long, List<OrderItemQueryDto>> orderItemMap = findOrderItemMap(toOrderIds(result));
+
+        result.forEach(o -> o.setOrderItems(orderItemMap.get(o.getOrderId()))); //ForEach 하면 Void 형태라서 Return 문이랑 같이 쓸수없음
+        return result;
+    }
+
+    private Map<Long, List<OrderItemQueryDto>> findOrderItemMap(List<Long> orderIds) {
+        List<OrderItemQueryDto> orderItems = em.createQuery(
+                        " select new jpabook.jpashop.repository.order.query.OrderItemQueryDto(oi.order.id, i.name, oi.orderPrice, oi.count)" + //주문 먼저 조회 (페이징 가능) #1번 쿼리
+                                " from OrderItem oi" +
+                                " join oi.item i" +
+                                " where oi.order.id in : orderIds", //여러 개의 주문 ID들에 해당하는 주문 항목을 한 번에 조회하기 위해 In절 #2번 쿼리 *쿼리는 여러번 발생하지만 보통 2-3, 효율적 , 중복데이터 문제없음
+                        // 컬렉션 패치 조인은 페이징 불가. 중복 데이터가 생기면 DISTINCT 해결
+                        OrderItemQueryDto.class)
+                .setParameter("orderIds", orderIds)
+                .getResultList();
+        Map<Long, List<OrderItemQueryDto>> orderItemMap = orderItems.stream().collect(Collectors.groupingBy(OrderItemQueryDto::getOrderId)); //데이터 그룹핑 작업 (같은 주문 ID를 가진 OrderItemQueryDto를 List로 묶어 Map에 저장. - DB JOIN이 아닌 Java Memory JOIN (- 데이터 양이 많으면 성능 저하)
+        return orderItemMap;
+    }
+
+    private List<Long> toOrderIds(List<OrderQueryDto> result) {
+        List<Long> orderIds = getLongs(result);
+        return orderIds;
+    }
+
+    private List<Long> getLongs(List<OrderQueryDto> result) {
+        List<Long> orderIds = result.stream().map(o -> o.getOrderId()).collect(Collectors.toList());
+        return orderIds;
     }
 }
