@@ -46,7 +46,7 @@ public class OrderQueryRepository {
                 .getResultList();
         //to many 관계는 부모 하나에 여러 자식이 붙을수있으니깐 하나에 대한 여러 Row 반환 => 컬랙션 패치 조인을 써야함.
     }
-    //컬렉션 패치 조인
+    //컬렉션 패치 조인[v5]
     public List<OrderQueryDto> findAllByDto_optimization() {
 
         List<OrderQueryDto> result = findOrders();
@@ -80,4 +80,17 @@ public class OrderQueryRepository {
         List<Long> orderIds = result.stream().map(o -> o.getOrderId()).collect(Collectors.toList());
         return orderIds;
     }
+
+    //플랫데이터 최적화[v8]
+    public List<OrderFlatDto> findAllByDto_flat() {
+        return em.createQuery(
+                "select new " +
+                        " jpabook.jpashop.repository.order.query.OrderFlatDto(o.id, m.name, o.orderDate, o.status, d.address, i.name, oi.orderPrice, oi.count) " +
+                        " from Order o "+
+                        " join o.member m " +
+                        " join o.delivery d " +
+                        " join o.orderItems oi " +
+                        " join oi.item i",OrderFlatDto.class)
+                .getResultList();
+    } //중복은 생김. 주문 + 회원 + 배송 + 주문 상품 + 상품 정보 => 한줄로 펼쳐서 모두 데이터를 가져옴.(flat) , 복잡한 N+1 문제를 피하는데는 쓰임.
 }
