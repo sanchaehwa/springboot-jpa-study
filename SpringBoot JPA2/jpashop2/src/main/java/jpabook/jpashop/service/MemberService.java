@@ -1,9 +1,9 @@
 package jpabook.jpashop.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import jpabook.jpashop.domain.Member;
 import jpabook.jpashop.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -14,7 +14,6 @@ import java.util.List;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-
     /**
      * 회원가입
      */
@@ -41,7 +40,8 @@ public class MemberService {
     }
 
     public Member findOne(Long memberId) {
-        return memberRepository.findOne(memberId);
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다. ID: " + memberId)); // Optional에서 실제 엔티티 꺼냄 -> 객체가 없으면 NoSuchElementException을 발생시킴 . 명확하고 안전한 예외처리를 위해 .get() 이 아닌 OrElseThrow() 사용
     }
 
     /**
@@ -49,7 +49,8 @@ public class MemberService {
      */
     @Transactional
     public void update(Long id, String name) {
-        Member member = memberRepository.findOne(id); //수정할 회원 찾음 -Query
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("회원을 찾을 수 없습니다. ID: " + id));;
         member.setName(name); //회원 수정 - Command
 
     }
