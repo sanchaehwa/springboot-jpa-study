@@ -253,3 +253,167 @@ public class InitDb {
 5. **em.persist()가 트랜잭션 안에서 실행된다 (영속성 컨텍스트에 Member 등록)**
     
     → 트랜잭션 커밋 시점에 JPA가 flush → DB에 insert 쿼리 실행
+### 엔티티 설계(*ToOne 성능 최적화)
+
+> *ToOne 관계는 연관 엔티티 조회시, N+1 문제나 불필요한 쿼리 증가 가능성이 있어, 성능최적화가 필요함.
+> 
+
+성능 문제가 생기는 이유
+
+- ManyToOne, OneToOne 관계는 기본적으로 **즉시 로딩(Eager Loading)** 으로 설정됨
+- 즉, **부모 엔티티를 조회할 때 연관된 엔티티까지 한꺼번에 SELECT** 해 오려고 함
+- 이때 연관된 엔티티를 **Join** 해서 가져오거나, 별도의 **추가 SELECT** 로 가져옴
+- → **불필요한 쿼리 실행** 발생 → 성능 저하 가능성
+
+```java
+List<Order> orders = orderRepository.findAll(); //주문 100개를 조회한다고 할때
+for (Order order : orders) {
+		System.out.println(order.getMember().getName());
+} // 각 Order마다 연관된 Member를 가져옴(추가쿼리) -> N+1 문제 발생
+ 
+```
+
+- 필요하지 않는 정보까지 불러오게 되면서 API 스펙에 맞지않을 가능성도 있음.
+
+Fetch Join를 사용해서 조회를 하면, JPA는 SQL Join을 그대로 사용함.
+
+```java
+//JPA 
+return em.createQuery(
+    "SELECT o FROM Order o JOIN o.orderItems oi", Order.class
+).getResultList();
+
+//SQL
+SELECT o.*
+FROM orders o
+JOIN order_item oi ON o.id = oi.order_id
+```
+
+문제1)  Order (1) ↔ OrderItem (N) 관계일 때:
+
+- 하나의 Order가 여러 개의 OrderItem을 갖고 있다면,
+- JPQL JOIN FETCH를 사용하면 **SQL 조인**이 발생하고,
+- **SQL 결과는 조인된 수만큼 Order 정보가 중복**되어 내려옴.
+- Order ID = 1 이고, OrderItem이 3개라면, Order ID = 1이 3번 반복됨.
+- **동일한 Order ID라도** 조인된 row가 다르면 **다른 객체로 인식할 수 있음** → 중복된 Order 객체가 생성됨
+
+문제1 해결)
+
+1. SQL 레벨:
+    - SQL 쿼리에 DISTINCT가 붙어 중복 row 제거 (정확히는 SELECT DISTINCT ... 형태로 실행됨)
+2. JPA 레벨 (중요):
+    - JPA는 **엔티티의 식별자(PK)** 기준으로 **중복된 엔티티 인스턴스를 메모리에서 자동 제거**
+    - 즉, 같은 Order ID를 가진 객체는 **한 번만 조회되어 컬렉션에 담김**
+
+```java
+//JPA 
+return em.createQuery(
+    "SELECT DISTINCT o FROM Order o JOIN FETCH o.orderItems", Order.class
+).getResultList();
+
+//SQL
+SELECT DISTINCT o.*
+FROM orders o
+JOIN order_items oi ON o.id = oi.order_id
+```
+
+문제2) 컬렉션 페치 조인을 사용하면, 페이징이 불가능하다. 
+
+- Order 1개에 OrderItem이 3개 있다고 하면, JPA가 Order와 OrderItem을 **Fetch Join**하면, **조인된 row가 3개**가 됨 (Order가 3번 반복됨).
+- 이런 중복된 row 때문에 **페이징의 기준이 깨져버림**.
+- Hibernate, 쿼리에는 LIMIT , OFFSET을 적용하지않음. 대신 경고 로그를 출력함.
+    
+    `firstResult/maxResults specified with collection fetch; applying in memory!`
+    
+- 즉, DB에서 전체 데이터를 다 읽고, 메모리상에서 페이징 처리. ⇒ 비효율적, 데이터가 많으면 OutOfMemory 위험도 있음.
+
+> 페이징 API
+JPA는 페이징 처리시, `setFirstResult` , `setMaxResults` 매서드로 추상화 하고. 
+내부적으로 동작되는 쿼리는 JPA에 설정한 Database 방언에 맞게 실행됨. 
+⇒ 정리하자면 페이징 API는 JPA가 조회 쿼리의 결과를 원하는 범위로 제한하도록 지원하는 기능이며, 내부적으로 DB에 맞는 방식으로 LIMIT/OFFSET 등을 적용하는것.
+> 
+> 
+> ```java
+> setFirstResult(int startPosition) // startPosition : 조회할 시작 위치
+> setMaxResults(int maxResult) // maxResult : 조회할 데이터 수
+> ```
+> 
+
+문제해결2) 
+
+- 컬렉션은 Fetch Join을 하지않고, LAZY 로딩 + Batch Size를 사용함.
+- 또는 DTO에서 직접 조회해서 쿼리를 튜닝하는 방법.
+
+[참고] 
+
+- 모든 객체는 서로 참조를 통해, 마치 그래프처럼 연결되있다. 자바에서 .(점)을 찍어서 연관된 객체로 이동할 수 있다.
+- JPQL에서도 경로 표현식을 통해 객체 그래프를 탐색할 수 있다.
+1. 상태 필드
+    - JPQL
+    `select m.username from Member m`
+        - Member 객체의 username 필드의 접근하기 위한. (Member 객체의 연관객체인 username 이동할수있다는것)
+    - SQL
+    `SELECT m.username FROM member m`
+
+→ 문자열이나 숫자처럼 단순한 값을 저장하는 필드. 더이상 탐색이 불가능. 
+
+1. 단일값 연관 필드
+- `@OneToOne`  , `@ManyToOne` 연관관계를 맺은 필드. 엔티티이기때문에,추가 탐색이 가능함. 묵시적 내부 조인이 발생한다.
+1. `@OneToMany,` `@ManyToMany` 을 통해 연관관계를 맺은 필드. 탐색 결과는 컬렉션이다. 추가 탐색이 불가능하다. 묵시적 내부조인이 발생한다. 
+
+- 묵시적 내부조인 : JPQL에는 조인이 명시되어있지 않지만, SQL에서는 조인이 생기는것. 연관된 엔티티는 다른 테이블에 저장되어 있기때문에, 조인을 통해 가지고와야한다.
+- 묵시적 조인은, 내부조인이 되는 한계가 있다.
+- JPQL은 변환되는 SQL과 최대한 모영을 비슷하게 맞춰주는것이 유지보수하기에도 좋다.
+- 그래서 묵시적 조인 대신 명시적 조인을 사용한다.
+
+### 관심사 분리
+
+**화면에 보여지는 API(Presentation Layer API)**
+
+- 사용자 인터페이스(UI) 와 직접 연결되는 API
+- 클라이언트에서 데이터를 보여주기 위해 호출.
+- 조회용(Read) 많음.
+- 성능이나 응답속도가 중요함.
+- REST API & GraphQL 형태로 많이 구성됨.
+
+**중요 서비스 로직 (Core Business Logic API)**
+
+- 비즈니스의 핵심을 처리함.
+- 데이터 생성, 수정, 삭제 및 중요한 비즈니스 규칙.
+- 도메인 중심 설계
+
+## OSIV와 성능 최적화
+
+- Open EntityManager In View : JPA 에서 OSIV를 부르는 용어 (관례상 OSIV라 함)
+- OSIV(Open Session In View) : 영속성 컨텍스트를 뷰 렌더링이 끝날 때까지 열어두는것(트랜잭션이 끝나고나서도)
+- JPA의 영속성 컨텍스트가 DB 커넥션을 얻는 시점 ⇒ DB 트랜잭션이 시작될때 (@Transactional) 어노테이션이 붙은 매서드가 실행이 될 때.
+- `spring.jpa.open-in-view: true` 일때
+    - EntityManager (영속성 컨텍스트) 가 Controller 또는 View(Rendering) 까지 살아있음.
+    - 서비스 매서드 (@Transactional) 이 끝나도 DB 커넥션 반납하지 않고, View에서 Lazy 로딩 가능하게 함.
+    
+    ```java
+    @GetMapping("/orders")
+    public List<Order> orders() {
+        List<Order> orders = orderService.findAll(); // 이때는 member 안 불러옴
+        return orders; // 여기서 member.getName() 같은 접근이 일어나면 Lazy 로딩 발생 => Member 조회
+    }
+    ```
+    
+- `spring.jpa.open-in-view: false`  일때
+    - 서비스 계층(@Transactional) 이 끝나는 순간, EntityManager 닫히고 DB 커넥션도 반환
+    - 그 이후에 Lazy 로딩을 시도하면 예외(LazyInitializationException) 발생
+    - 트랜잭션이 끝나기전에 강제로 지연로딩해야함
+    
+    ```java
+    @Transactional
+    public List<OrderDto> findAllOrders() {
+        List<Order> orders = orderRepository.findAllWithMemberAndItems(); // fetch join 등으로 다 미리 로딩
+        return orders.stream().map(...).collect(toList()); //서비스에 필요한 모든 데이터를 가지고와야함.
+    } //@Transaction이 끝남.
+    ```
+    
+- Command 와 Query 분리
+    - 실무에서 OSIV를 끈 상태로 복잡성을 관리하기 좋은 방법
+    - 보통 비즈니스 로직은 특정 엔티티 몇개를 등록하거나 수정하는 것이므로, 성능이 크게 문제가 되진않지만, 복잡한 화면을 출력하기 위한 쿼리는 화면에 맞추어 성능을 최적화하는것이 중요
+    - 관심사 분리.
+    - 고객 서비스의 실시간 API는 OSIV를 끄고, ADMIN 처럼 커넥션을 많이 사용하지 않는 곳에서는 OSIV를 켠다.
