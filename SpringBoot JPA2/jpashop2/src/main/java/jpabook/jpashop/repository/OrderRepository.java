@@ -1,22 +1,32 @@
 package jpabook.jpashop.repository;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.*;
+import jpabook.jpashop.domain.*;
 import jpabook.jpashop.domain.Order;
-import jpabook.jpashop.domain.OrderSearch;
-import jpabook.jpashop.repository.order.simplequery.OrderSimpleQueryDto;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.EntityManager;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import static jpabook.jpashop.domain.QMember.member;
+import static jpabook.jpashop.domain.QOrder.order;
+
 @Repository
-@RequiredArgsConstructor
 public class OrderRepository {
 
     private final EntityManager em;
+    private final JPAQueryFactory query;
+
+    public OrderRepository(EntityManager em) {
+        this.em = em;
+        this.query = new JPAQueryFactory(em);
+    }
 
     public void save(Order order) {
         em.persist(order);
@@ -41,6 +51,7 @@ public class OrderRepository {
             }
             jpql += " o.status = :status";
         }
+
         //회원 이름 검색
         if (StringUtils.hasText(orderSearch.getMemberName())) {
             if (isFirstCondition) {
@@ -66,22 +77,83 @@ public class OrderRepository {
     }
 
     public List<Order> findAllByCriteria(OrderSearch orderSearch) {
-        return null;
+
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<Order> cq = cb.createQuery(Order.class);
+        Root<Order> o = cq.from(Order.class);
+        Join<Order, Member> m = o.join("member", JoinType.INNER); //회원과 조인
+
+        List<Predicate> criteria = new ArrayList<>();
+
+        //주문 상태 검색
+        if (orderSearch.getOrderStatus() != null) {
+            Predicate status = cb.equal(o.get("status"), orderSearch.getOrderStatus());
+            criteria.add(status);
+        }
+
+        //회원 이름 검색
+        if (StringUtils.hasText(orderSearch.getMemberName())) {
+            Predicate name =
+                    cb.like(m.<String>get("name"), "%" + orderSearch.getMemberName() + "%");
+            criteria.add(name);
+        }
+
+        cq.where(cb.and(criteria.toArray(new Predicate[criteria.size()])));
+        TypedQuery<Order> query = em.createQuery(cq).setMaxResults(1000); //최대 1000건
+        return query.getResultList();
+    }
+
+    public List<Order> findAll(OrderSearch orderSearch) {
+        return query
+                .select(order)
+                .from(order)
+                .join(order.member, member)
+                .where(statusEq(orderSearch.getOrderStatus()), nameLike(orderSearch.getMemberName()))
+                .limit(1000)
+                .fetch();
+    }
+
+    private BooleanExpression nameLike(String name) {
+        if (!StringUtils.hasText(name)) {
+            return null;
+        }
+        return member.name.like(name);
+    }
+
+    private BooleanExpression statusEq(OrderStatus statusCond) {
+        if (statusCond == null) {
+            return null;
+        }
+        return order.status.eq(statusCond);
+    }
+
+    public List<Order> findAllWithMemberDelivery() {
+        return em.createQuery(
+                "select o from Order o" +
+                        " join fetch o.member m" +
+                        " join fetch o.delivery d", Order.class
+        ).getResultList();
+    }
+
+    public List<Order> findAllWithItem() {
+        return em.createQuery(
+                "select distinct o from Order o" +
+                        " join fetch o.member m" +
+                        " join fetch o.delivery d" +
+                        " join fetch o.orderItems oi" +
+                        " join fetch oi.item i", Order.class
+        ).getResultList();
     }
 
     public List<Order> findAllWithMemberDelivery(int offset, int limit) {
-        return em.createQuery("select o from Order o " + "join fetch o.member m " + "join fetch o.delivery d ", Order.class)
+        return em.createQuery(
+                        "select o from Order o" +
+                                " join fetch o.member m" +
+                                " join fetch o.delivery d", Order.class
+                )
                 .setFirstResult(offset)
                 .setMaxResults(limit)
-                .getResultList(); //Order - Member - Delivery Join 하고 한번에 가져오는(Lazy 무시 - Proxy 값을 채워서 가져오는것이 아니라, 진짜 객체를 가져옴)
-
-    }
-    public List<Order> findAllWithItem() {
-        return em.createQuery("  select distinct o from Order o " + " join fetch o.member m" + " join fetch o.delivery d "+ "join fetch o.orderItems oi "+" join fetch oi.item i " ,Order.class)
                 .getResultList();
-
-
     }
-    //distinct : 데이터 중복 제거
- }
 
+}
